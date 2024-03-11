@@ -85,15 +85,18 @@ func GenerateToken() (string, error) {
 }
 
 func ParseToken(token_string string) (*jwtClaims, error) {
-	token, err := gjwt.ParseWithClaims(token_string, &jwtClaims{}, func(token *gjwt.Token) (interface{}, error) {
+	var err error
+	var token *gjwt.Token
+	var claims *jwtClaims
+	var ok bool
+	if token, err = gjwt.ParseWithClaims(token_string, &jwtClaims{}, func(token *gjwt.Token) (interface{}, error) {
 		pub, err := parsePubKeyBytes(rsa_pub)
 		if err != nil {
 			fmt.Println("err = ", err)
 			return nil, err
 		}
 		return pub, nil
-	})
-	if err != nil {
+	}); err != nil {
 		return nil, err
 	}
 
@@ -101,8 +104,7 @@ func ParseToken(token_string string) (*jwtClaims, error) {
 		return nil, errors.New("claim invalid")
 	}
 
-	claims, ok := token.Claims.(*jwtClaims)
-	if !ok {
+	if claims, ok = token.Claims.(*jwtClaims); !ok {
 		return nil, errors.New("invalid claim type")
 	}
 
